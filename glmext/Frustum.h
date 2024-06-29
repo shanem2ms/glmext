@@ -174,9 +174,9 @@ namespace glm
                 glm::vec<3, T> vec1 = wpts[indx[1]] - wpts[indx[0]];
                 glm::vec<3, T> vec2 = wpts[indx[2]] - wpts[indx[1]];
                 glm::vec<3, T> nrm = glm::normalize(glm::cross(vec2, vec1));
-                mPlanes[i].mNorm = nrm;
+                mPlanes[i].normal = nrm;
                 T dist = glm::dot(nrm, glm::vec<3, T>(wpts[indx[1]]));
-                mPlanes[i].mOffset = dist;
+                mPlanes[i].d = dist;
             }
 
         }

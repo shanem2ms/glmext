@@ -31,7 +31,7 @@ public:
     * the offset is 0.
     */
    plane_t()
-      : mOffset( 0 )
+      : d( 0 )
    {}
 
    /**
@@ -47,10 +47,10 @@ public:
       glm::vec<3, T> vec12( pt2-pt1 );
       glm::vec<3, T> vec13( pt3-pt1 );
 
-      glm::cross( mNorm, vec12, vec13 );
-      normalize( mNorm );
+      glm::cross( normal, vec12, vec13 );
+      normalize( normal );
 
-      mOffset = dot( static_cast< glm::vec<3, T> >(pt1), mNorm );  // Graphics Gems I: Page 390
+      d = dot( static_cast< glm::vec<3, T> >(pt1), normal );  // Graphics Gems I: Page 390
    }
 
    /**
@@ -60,9 +60,9 @@ public:
     * @param pt      a point that lies on the plane
     */
    plane_t( const glm::vec<3, T>& norm, const glm::vec<3, T>& pt )
-      : mNorm( norm )
+      : normal( norm )
    {
-      mOffset = dot( static_cast< glm::vec<3, T> >(pt), norm );
+      d = dot( static_cast< glm::vec<3, T> >(pt), norm );
    }
 
    /**
@@ -72,7 +72,7 @@ public:
     * @param dPlaneConst   the plane offset constant
     */
    plane_t( const glm::vec<3, T>& norm, const T& dPlaneConst )
-      : mNorm( norm ), mOffset( dPlaneConst )
+      : normal( norm ), d( dPlaneConst )
    {}
 
    /**
@@ -81,7 +81,7 @@ public:
     * @param plane   the plane to copy
     */
    plane_t( const plane_t<T>& plane )
-      : mNorm( plane.mNorm ), mOffset( plane.mOffset )
+      : normal( plane.normal ), d( plane.d )
    {}
 
    /**
@@ -91,7 +91,7 @@ public:
     */
    const glm::vec<3, T>& getNormal() const
    {
-      return mNorm;
+      return normal;
    }
 
    /**
@@ -103,7 +103,7 @@ public:
     */
    void setNormal( const glm::vec<3, T>& norm )
    {
-      mNorm = norm;
+      normal = norm;
    }
 
    /**
@@ -114,7 +114,7 @@ public:
     */
    const T& getOffset() const
    {
-      return mOffset;
+      return d;
    }
 
    /**
@@ -124,99 +124,85 @@ public:
     */
    void setOffset( const T& offset )
    {
-      mOffset = offset;
+      d = offset;
    }
 
    
    T distanceTo(const vec<3, T>& pt) const
    {
-       return (dot(mNorm, pt) - mOffset);
+       return (dot(normal, pt) - d);
    }
 
 public:
-   // dot(Pt,mNorm) = mOffset
+   // dot(Pt,normal) = d
    /**
     * The normal for this vector. For any point on the plane,
-    * dot( pt, mNorm) = mOffset.
+    * dot( pt, normal) = d.
     */
-   glm::vec<3, T> mNorm;
+   glm::vec<3, T> normal;
 
    /**
     * This plane's offset from the origin such that for any point pt,
-    * dot( pt, mNorm ) = mOffset. Note that mOffset = -D (neg dist from the
+    * dot( pt, normal ) = d. Note that d = -D (neg dist from the
     * origin).
     */
-   T mOffset;
+   T d;
 };
 
-typedef plane_t<float> planef;
-typedef plane_t<double> planed;
-
-/*
-#include <geomdist.h>
-
-
-// Intersects the plane with a given segment.
-// Returns TRUE if there is a hit (within the seg).
-// Also returns the distance "down" the segment of the hit in t.
-//
-// PRE: seg.dir must be normalized
-//
-int sgPlane::isect(sgSeg& seg, float* t)
+template<typename T> vec<3, T> generate_u(const plane_t<T>& p)
 {
-	// Graphic Gems I: Page 391
-	float denom = normal.dot(seg.dir);
-	if (SG_IS_ZERO(denom))		// No Hit
-	{
-		//: So now, it is just dist to plane tested against length
-		sgVec3	hit_pt;
-		float		hit_dist;		// Dist to hit
-		
-		hit_dist = findNearestPt(seg.pos, hit_pt);
-		*t = hit_dist;			// Since dir is normalized
-
-		if(seg.tValueOnSeg(*t))
-			return 1;
-		else
-			return 0;
-	}
-	else
-	{
-		float numer = offset + normal.dot(seg.pos);
-		(*t) = -1.0f * (numer/denom);
-		
-		if(seg.tValueOnSeg(*t))
-			return 1;
-		else
-			return 0;
-	}
+    if (std::abs(p.normal.x) > std::abs(p.normal.z)) {
+        return normalize(vec<3, T>(-p.normal.y, p.normal.x, 0.0f));
+    }
+    else {
+        return normalize(vec<3, T>(0.0f, -p.normal.z, p.normal.y));
+    }
 }
 
-///
- // Intersects the plane with the line defined
- // by the given segment
- //
- // seg - seg that represents the line to isect
- // t   - the t value of the isect
- //
-int sgPlane::isectLine(const sgSeg& seg, float* t)
+template<typename T> void generate_uv(const plane_t<T>& p, vec<3, T> &out_u, vec<3, T> &out_v)
 {
-	// GGI: Pg 299
-	// Lu = seg.pos;
-	// Lv = seg.dir;
-	// Jn = normal;
-	// Jd = offset;
-	
-	float denom = normal.dot(seg.dir);
-	if(denom == 0.0f)
-      return 0;
-	else
-	{
-      *t = - (offset+ normal.dot(seg.pos))/(denom);
-      return 1;
-	}
+    out_u = generate_u(p);
+    out_v = cross(out_u, p.normal);
 }
-*/
+
+
+template<typename T> vec<2, T> project(const vec<3, T>& u, const vec<3, T>& v, const vec<3, T>& invec)
+{
+    return vec<2, T>(dot(u, invec), dot(v, invec));
+}
+
+template<typename T> vec<3, T> unproject(
+    const plane_t<T> &p,
+    const vec<3, T>& u, const vec<3, T>& v, const vec<2, T>& invec)
+{
+    return invec.x * u + invec.y * v + p.normal * p.d;
+}
+
+template<typename T> bool intersect(const plane_t<T> &p1, const plane_t<T>& p2, vec<3,T>& out_point, vec<3,T>& out_direction)
+{
+    // logically the 3rd plane, but we only use the normal component.
+    const glm::vec<3,T> lineDir = cross(p1.normal,p2.normal);
+    const T det = glm::lensq(lineDir);
+
+    // If the determinant is 0, that means parallel planes, no intersection.
+    // note: you may want to check against an epsilon value here.
+    if (det == 0.0)
+        return false;
+
+    // Find a point on the line by solving the system of equations
+    // We use the fact that any point on the intersection line satisfies both plane equations
+    T d1 = -p1.d;
+    T d2 = -p2.d;
+
+    // Create a system of linear equations to solve for a point on the line
+    glm::mat3 A(p1.normal, p2.normal, lineDir);
+    glm::vec3 b(-d1, -d2, 0.0f);
+
+    // Solve the system using matrix inverse
+    out_point = b * glm::inverse(A);
+    out_direction = lineDir;
+}
+
 typedef plane_t<float> planef;
 typedef plane_t<double> planed;
 }
