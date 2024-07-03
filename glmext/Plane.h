@@ -178,31 +178,6 @@ template<typename T> vec<3, T> unproject(
     return invec.x * u + invec.y * v + p.normal * p.d;
 }
 
-template<typename T> bool intersect(const plane_t<T> &p1, const plane_t<T>& p2, vec<3,T>& out_point, vec<3,T>& out_direction)
-{
-    // logically the 3rd plane, but we only use the normal component.
-    const glm::vec<3,T> lineDir = cross(p1.normal,p2.normal);
-    const T det = glm::lensq(lineDir);
-
-    // If the determinant is 0, that means parallel planes, no intersection.
-    // note: you may want to check against an epsilon value here.
-    if (det == 0.0)
-        return false;
-
-    // Find a point on the line by solving the system of equations
-    // We use the fact that any point on the intersection line satisfies both plane equations
-    T d1 = -p1.d;
-    T d2 = -p2.d;
-
-    // Create a system of linear equations to solve for a point on the line
-    glm::mat3 A(p1.normal, p2.normal, lineDir);
-    glm::vec3 b(-d1, -d2, 0.0f);
-
-    // Solve the system using matrix inverse
-    out_point = b * glm::inverse(A);
-    out_direction = lineDir;
-}
-
 typedef plane_t<float> planef;
 typedef plane_t<double> planed;
 }

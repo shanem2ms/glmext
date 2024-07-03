@@ -91,7 +91,10 @@ public:
   void scale(const glm::vec<2, T>& scale, const glm::vec<2, T>& origin);
 
   /// Retrieves the center of the aabox2_t.
-  glm::vec<2, T> getCenter() const;
+  glm::vec<2, T> getCenter() const
+  {
+      return (mMin + mMax) * (T)(0.5);
+  }
 
   /// Retrieves the diagonal vector (computed as mMax - mMin).
   /// If the aabox2_t is NULL, then a vector of all zeros is returned.
