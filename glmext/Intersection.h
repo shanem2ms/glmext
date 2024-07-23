@@ -56,7 +56,6 @@ namespace glm
     }
 
 
-
     template<typename T> bool intersect(const plane_t<T>& p1, const plane_t<T>& p2, vec<3, T>& out_point, vec<3, T>& out_direction)
     {
         // logically the 3rd plane, but we only use the normal component.
@@ -80,6 +79,7 @@ namespace glm
         // Solve the system using matrix inverse
         out_point = b * glm::inverse(A);
         out_direction = lineDir;
+        return true;
     }
 
 }

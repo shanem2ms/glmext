@@ -20,37 +20,37 @@ namespace glm
         T AngleFromPt(const glm::vec<3, T>& p) const
         {
             glm::vec<3, T> v = glm::normalize(p - center);
-            glm::planef circle_plane(normal, center);
+            glm::plane_t<T> circle_plane(normal, center);
             glm::vec<3, T> udir, vdir;
             glm::generate_uv(circle_plane, udir, vdir);
-            float angle = glm::atan(glm::dot(v, vdir), glm::dot(v, udir));
-            if (angle < 0) angle += 2 * glm::pi<float>();
+            T angle = glm::atan(glm::dot(v, vdir), glm::dot(v, udir));
+            if (angle < 0) angle += 2 * glm::pi<T>();
             return angle;
         }
 
         glm::vec<3, T> PtFromAngle(T angle) const
         {
-            glm::planef circle_plane(normal, center);
+            glm::plane_t<T> circle_plane(normal, center);
             glm::vec<3, T> udir, vdir;
             glm::generate_uv(circle_plane, udir, vdir);
             return center + radius * (udir * std::cos(angle) + vdir * std::sin(angle));
         }
 
-        std::vector<glm::vec<3, T>> discretize(int numSegments, float a0 = 0, float a1 = 0) const
+        std::vector<glm::vec<3, T>> discretize(int numSegments, T a0 = 0, T a1 = 0) const
         {
             if (a1 < a0)
                 a1 += glm::two_pi<T>();
             std::vector<glm::vec<3, T>> points;
-            float delta = a1 - a0;
+            T delta = a1 - a0;
             if (delta <= 0)
-                delta += glm::two_pi<float>();
-            float angleStep = delta / (numSegments - 1);
-            glm::planef circle_plane(normal, center);
+                delta += glm::two_pi<T>();
+            T angleStep = delta / (numSegments - 1);
+            glm::plane_t<T> circle_plane(normal, center);
             glm::vec<3, T> udir, vdir;
             glm::generate_uv(circle_plane, udir, vdir);
 
             for (int i = 0; i < numSegments; ++i) {
-                float angle = a0 + i * angleStep;
+                T angle = a0 + i * angleStep;
                 glm::vec3 point = center + radius * (udir * std::cos(angle) + vdir * std::sin(angle));
                 points.push_back(point);
             }
